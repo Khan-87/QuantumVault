@@ -1,0 +1,8 @@
+[build]
+  base = "QuantumVault-Frontend-v1"
+  command = "pnpm build"
+  publish = "out"
+
+# Skip the Netlify Next.js plugin since we use static HTML export
+[build.environment]
+  NETLIFY_NEXT_PLUGIN_SKIP = "true"

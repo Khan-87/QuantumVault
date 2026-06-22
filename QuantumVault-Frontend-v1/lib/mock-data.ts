@@ -25,7 +25,7 @@ export const mockUser: VaultUser = {
   memberSince: "2024-03-12",
 }
 
-export const STORAGE_LIMIT = 100 * 1024 * 1024 * 1024 // 100 GB
+export const STORAGE_LIMIT = 5 * 1024 * 1024 * 1024 // 5 GB
 
 export const mockFiles: VaultFile[] = [
   {

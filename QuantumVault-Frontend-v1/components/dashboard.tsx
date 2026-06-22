@@ -7,7 +7,7 @@ import { FileList } from "@/components/file-list"
 import { UploadArea } from "@/components/upload-area"
 import { AccountSettings } from "@/components/account-settings"
 import { type VaultFile, type FileType } from "@/lib/mock-data"
-import { fetchUserFiles, uploadEncryptedFile, downloadEncryptedFile, type FileRecord } from "@/lib/api"
+import { fetchUserFiles, uploadEncryptedFile, downloadEncryptedFile, deleteFile, type FileRecord } from "@/lib/api"
 import { encryptFile, decryptFile, uint8ToBase64, base64ToUint8 } from "@/lib/crypto"
 import { type UserSession } from "@/app/page"
 
@@ -113,8 +113,14 @@ export function Dashboard({ session, onSignOut }: { session: UserSession; onSign
     setFiles((prev) => prev.map((f) => (f.id === id ? { ...f, name } : f)))
   }
 
-  function handleDelete(id: string) {
-    setFiles((prev) => prev.filter((f) => f.id !== id))
+  async function handleDelete(id: string) {
+    try {
+      await deleteFile(session.token, id)
+      setFiles((prev) => prev.filter((f) => f.id !== id))
+    } catch (error) {
+      console.error("Delete failed:", error)
+      alert("Failed to delete file.")
+    }
   }
 
   return (

@@ -126,6 +126,14 @@ export class BackendStack extends cdk.Stack {
       bundling,
     });
 
+    const deleteFileLambda = new NodejsFunction(this, 'DeleteFileHandler', {
+      entry: path.join(__dirname, '../lambdas/delete-file.ts'),
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      environment,
+      bundling,
+    });
+
     // ─── 5. Grant Permissions ───────────────────────────────────────────────
     usersTable.grantReadData(getSaltLambda);
     usersTable.grantReadWriteData(registerLambda);
@@ -138,6 +146,9 @@ export class BackendStack extends cdk.Stack {
 
     storageBucket.grantWrite(getUploadUrlLambda);
     storageBucket.grantRead(getDownloadUrlLambda);
+
+    filesTable.grantReadWriteData(deleteFileLambda);
+    storageBucket.grantReadWrite(deleteFileLambda);
 
     // ─── 6. API Gateway ────────────────────────────────────────────────────
     const api = new apigateway.RestApi(this, 'QuantumVaultApi', {
@@ -161,6 +172,7 @@ export class BackendStack extends cdk.Stack {
     files.addResource('upload-url').addMethod('POST', new apigateway.LambdaIntegration(getUploadUrlLambda));
     files.addResource('confirm').addMethod('POST', new apigateway.LambdaIntegration(confirmUploadLambda));
     files.addResource('download-url').addMethod('POST', new apigateway.LambdaIntegration(getDownloadUrlLambda));
+    files.addResource('delete').addMethod('POST', new apigateway.LambdaIntegration(deleteFileLambda));
 
     // ─── Stack Outputs ──────────────────────────────────────────────────────
     new cdk.CfnOutput(this, 'ApiUrl', {

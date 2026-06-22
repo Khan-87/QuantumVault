@@ -8,9 +8,15 @@ importers:
 
   .:
     dependencies:
+      '@aws-sdk/client-dynamodb':
+        specifier: ^3.1073.0
+        version: 3.1073.0
       '@aws-sdk/client-s3':
         specifier: ^3.1072.0
         version: 3.1072.0
+      '@aws-sdk/lib-dynamodb':
+        specifier: ^3.1073.0
+        version: 3.1073.0(@aws-sdk/client-dynamodb@3.1073.0)
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.1072.0
         version: 3.1072.0
@@ -97,6 +103,10 @@ packages:
     resolution: {integrity: sha512-qh0fG/RtrFztst4+vn1HZehAvAhr5Jlq/WMP7e5KvvfF16oNVBc9CDNVdxdm19vzOY2x0qiDMFCRjhxQAusGWQ==}
     engines: {node: '>=20.0.0'}
 
+  '@aws-sdk/client-dynamodb@3.1073.0':
+    resolution: {integrity: sha512-2GUPeI0drcms+LOoSC2DfVLCUWQxjjUm4jN08MrVh40XnIRQZ9PxCjFCqAj6yMRXPAzze925MMXEXBQC7IS6jw==}
+    engines: {node: '>=20.0.0'}
+
   '@aws-sdk/client-s3@3.1072.0':
     resolution: {integrity: sha512-W5+7uklGSWJYsK1v/pUsv6i5/VR4xKXzcqPq7xHubhWPcRfhV4v/93XRkjjn57nJheDBjvzD/nVxBqhHOLuxCw==}
     engines: {node: '>=20.0.0'}
@@ -137,6 +147,24 @@ packages:
     resolution: {integrity: sha512-0Iv5QttS6wcATlodYKgvQj6B9Db51rx7NU9fqu0PoLeS4BIgdYMc/QK4smwLwpm5RFrs02V/eLyEFp3FklvlNQ==}
     engines: {node: '>=20.0.0'}
 
+  '@aws-sdk/dynamodb-codec@3.973.22':
+    resolution: {integrity: sha512-QBs7/nWHsPA0wTEqhU5iPgaDjeZzQHhmwJr6Q0f56rW3Fk8ExJQgXFzEg/l48iDwJVUIMLjPqhw7dNP3cShUxA==}
+    engines: {node: '>=20.0.0'}
+
+  '@aws-sdk/endpoint-cache@3.972.8':
+    resolution: {integrity: sha512-bBmkG0Dnhfq0/T4Z0PpUr7HkncBVaWvvCbvafeaUM+yC9wa8GGjLJmonq0QL17REB9WivgGeYgWQ5A80Uw5UnQ==}
+    engines: {node: '>=20.0.0'}
+
+  '@aws-sdk/lib-dynamodb@3.1073.0':
+    resolution: {integrity: sha512-CwE7BJVLSbVyQ+DHzn36vOapdmsBmA236jOnDhG4F4DEAeddDO5IPpIQuY7yhKGcZsGWPUdSvIxqAJzCyr82qA==}
+    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      '@aws-sdk/client-dynamodb': ^3.1073.0
+
+  '@aws-sdk/middleware-endpoint-discovery@3.972.19':
+    resolution: {integrity: sha512-FMgyzUq3Jh+ONRYxryBRNdBd+FUX8PwRl07ccQknNdoms6KCeAEusCkl6whqpDrPQ6OH0ddeSifKyqYSs2DLIw==}
+    engines: {node: '>=20.0.0'}
+
   '@aws-sdk/middleware-flexible-checksums@3.974.32':
     resolution: {integrity: sha512-KhuzFMzUbb3oEj43CdPDbEJ/RG/RkErkmXk3J/LE8OPFNvkCn8PYPMpjOLgzAzvxBacsSyytdWf+R50q0alJ4w==}
     engines: {node: '>=20.0.0'}
@@ -164,6 +192,12 @@ packages:
   '@aws-sdk/types@3.973.13':
     resolution: {integrity: sha512-pEHZqRkAlHfnfAU9tK+WpKv/gBNjGJrHMgA3A0iYRGyswBS2t0pfez+lWlwktb3Bqa0ovh7w/QJTFwp3fDxLNg==}
     engines: {node: '>=20.0.0'}
+
+  '@aws-sdk/util-dynamodb@3.996.5':
+    resolution: {integrity: sha512-m9bdmYq3WtbMHAKGALw9XWiMBfKu5T8ukgdJT7Mc/d2oOwDGNFmhsnnkQ18xomoXo/ZHxAuIDi3Y6slsblW1Mg==}
+    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      '@aws-sdk/client-dynamodb': ^3.1069.0
 
   '@aws-sdk/util-locate-window@3.965.8':
     resolution: {integrity: sha512-uUbMs1cBZPafD0ohUj6EwNf0fPZ534NvBxHox4hjX+0Rxq5paSYUem7+hi833pYrzrcnBATKIYpR02MDXT5M9g==}
@@ -1468,6 +1502,9 @@ packages:
     resolution: {integrity: sha512-tEBHqDnIoM/1rXME1zgka9g6Q2lcoCkxHLuc7ODJ5BxbP5d4c2Z5cGgtXAku59200Cx7diuHTOYfSBD8n6mm8A==}
     engines: {node: '>=16 || 14 >=14.17'}
 
+  mnemonist@0.38.3:
+    resolution: {integrity: sha512-2K9QYubXx/NAjv4VLq1d1Ly8pWNC5L3BrixtdkyTegXWJIqY+zLNDhhX/A+ZwWt70tB1S8H4BE8FLYEFyNoOBw==}
+
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
 
@@ -1496,6 +1533,9 @@ packages:
   npm-run-path@4.0.1:
     resolution: {integrity: sha512-S48WzZW777zhNIrn7gxOlISNAqi9ZC/uQFnRdbeIHhZhCA6UqpkOT8T1G7BvfdgP4Er8gF4sUbaS0i7QvIfCWw==}
     engines: {node: '>=8'}
+
+  obliterator@1.6.1:
+    resolution: {integrity: sha512-9WXswnqINnnhOG/5SLimUlzuU1hFJUc8zkwyD59Sd+dPOMf05PmnYG/d6Q7HZ+KmgkZJa1PxRso6QdM3sTNHig==}
 
   once@1.4.0:
     resolution: {integrity: sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==}
@@ -1891,6 +1931,21 @@ snapshots:
       '@smithy/types': 4.15.0
       tslib: 2.8.1
 
+  '@aws-sdk/client-dynamodb@3.1073.0':
+    dependencies:
+      '@aws-crypto/sha256-browser': 5.2.0
+      '@aws-crypto/sha256-js': 5.2.0
+      '@aws-sdk/core': 3.974.22
+      '@aws-sdk/credential-provider-node': 3.972.57
+      '@aws-sdk/dynamodb-codec': 3.973.22
+      '@aws-sdk/middleware-endpoint-discovery': 3.972.19
+      '@aws-sdk/types': 3.973.13
+      '@smithy/core': 3.25.1
+      '@smithy/fetch-http-handler': 5.5.1
+      '@smithy/node-http-handler': 4.8.1
+      '@smithy/types': 4.15.0
+      tslib: 2.8.1
+
   '@aws-sdk/client-s3@3.1072.0':
     dependencies:
       '@aws-crypto/sha1-browser': 5.2.0
@@ -2003,6 +2058,35 @@ snapshots:
       '@smithy/types': 4.15.0
       tslib: 2.8.1
 
+  '@aws-sdk/dynamodb-codec@3.973.22':
+    dependencies:
+      '@aws-sdk/core': 3.974.22
+      '@smithy/core': 3.25.1
+      '@smithy/types': 4.15.0
+      tslib: 2.8.1
+
+  '@aws-sdk/endpoint-cache@3.972.8':
+    dependencies:
+      mnemonist: 0.38.3
+      tslib: 2.8.1
+
+  '@aws-sdk/lib-dynamodb@3.1073.0(@aws-sdk/client-dynamodb@3.1073.0)':
+    dependencies:
+      '@aws-sdk/client-dynamodb': 3.1073.0
+      '@aws-sdk/core': 3.974.22
+      '@aws-sdk/util-dynamodb': 3.996.5(@aws-sdk/client-dynamodb@3.1073.0)
+      '@smithy/core': 3.25.1
+      '@smithy/types': 4.15.0
+      tslib: 2.8.1
+
+  '@aws-sdk/middleware-endpoint-discovery@3.972.19':
+    dependencies:
+      '@aws-sdk/endpoint-cache': 3.972.8
+      '@aws-sdk/types': 3.973.13
+      '@smithy/core': 3.25.1
+      '@smithy/types': 4.15.0
+      tslib: 2.8.1
+
   '@aws-sdk/middleware-flexible-checksums@3.974.32':
     dependencies:
       '@aws-sdk/checksums': 3.1000.7
@@ -2058,6 +2142,11 @@ snapshots:
   '@aws-sdk/types@3.973.13':
     dependencies:
       '@smithy/types': 4.15.0
+      tslib: 2.8.1
+
+  '@aws-sdk/util-dynamodb@3.996.5(@aws-sdk/client-dynamodb@3.1073.0)':
+    dependencies:
+      '@aws-sdk/client-dynamodb': 3.1073.0
       tslib: 2.8.1
 
   '@aws-sdk/util-locate-window@3.965.8':
@@ -3557,6 +3646,10 @@ snapshots:
 
   minipass@7.1.3: {}
 
+  mnemonist@0.38.3:
+    dependencies:
+      obliterator: 1.6.1
+
   ms@2.1.3: {}
 
   napi-postinstall@0.3.4: {}
@@ -3574,6 +3667,8 @@ snapshots:
   npm-run-path@4.0.1:
     dependencies:
       path-key: 3.1.1
+
+  obliterator@1.6.1: {}
 
   once@1.4.0:
     dependencies:

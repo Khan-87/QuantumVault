@@ -199,8 +199,21 @@ export async function uploadEncryptedFile(
     uploadTimestamp: new Date().toISOString(),
   };
 }
+// ─── 6. Delete File ─────────────────────────────────────────────────────────
 
-// ─── 6. Encrypted Download Pipeline ────────────────────────────────────────
+export async function deleteFile(token: string, fileId: string): Promise<void> {
+  const res = await fetch(`${API_URL}files/delete`, {
+    method: 'POST',
+    headers: getAuthHeader(token),
+    body: JSON.stringify({ fileId }),
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to delete file');
+  }
+}
+
+// ─── 7. Encrypted Download Pipeline ────────────────────────────────────────
 
 export async function downloadEncryptedFile(
   token: string,

@@ -160,14 +160,14 @@ export async function uploadEncryptedFile(
 
     xhr.onload = () => (xhr.status === 200 ? resolve() : reject(new Error(`S3 ciphertext upload failed: ${xhr.status}`)));
     xhr.onerror = () => reject(new Error('S3 ciphertext upload error'));
-    xhr.send(ciphertext);
+    xhr.send(ciphertext as any);
   });
 
   // E. Upload wrapped key to S3
   const wrappedKeyRes = await fetch(wrappedKeyUrl, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/octet-stream' },
-    body: wrappedKey,
+    body: wrappedKey as any,
   });
 
   if (!wrappedKeyRes.ok) {
@@ -242,7 +242,7 @@ export async function downloadEncryptedFile(
   const plaintext = await decryptFileFn(ciphertext, wrappedKey, iv, kyberPrivateKey);
 
   // D. Trigger browser download of the decrypted file
-  const blob = new Blob([plaintext]);
+  const blob = new Blob([plaintext as any]);
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

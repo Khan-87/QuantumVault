@@ -9,6 +9,7 @@ export interface UserSession {
   email: string
   kyberPublicKey: Uint8Array
   kyberPrivateKey: Uint8Array
+  vaultKey?: CryptoKey
 }
 
 export default function Page() {
@@ -17,8 +18,8 @@ export default function Page() {
   if (!session) {
     return (
       <LoginView
-        onSignIn={(token, email, kyberPublicKey, kyberPrivateKey) => {
-          setSession({ token, email, kyberPublicKey, kyberPrivateKey })
+        onSignIn={(token, email, kyberPublicKey, kyberPrivateKey, vaultKey) => {
+          setSession({ token, email, kyberPublicKey, kyberPrivateKey, vaultKey })
         }}
       />
     )

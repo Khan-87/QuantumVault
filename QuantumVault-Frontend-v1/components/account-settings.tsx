@@ -1,26 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { User, Mail, Calendar, BadgeCheck, KeyRound } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { formatDate, type VaultUser } from "@/lib/mock-data"
-
-const inputClass =
-  "h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
-
-function InfoRow({ icon: Icon, label, value }: { icon: typeof User; label: string; value: string }) {
-  return (
-    <div className="flex items-center gap-3 border-b border-border py-3 last:border-0">
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-        <Icon className="size-4 text-muted-foreground" aria-hidden="true" />
-      </div>
-      <div className="min-w-0">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="truncate text-sm font-medium">{value}</p>
-      </div>
-    </div>
-  )
-}
+import { type VaultUser, formatDate } from "@/lib/mock-data"
 
 export function AccountSettings({ user }: { user: VaultUser }) {
   const [current, setCurrent] = useState("")
@@ -45,81 +26,94 @@ export function AccountSettings({ user }: { user: VaultUser }) {
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <h1 className="text-xl font-semibold tracking-tight">Account Settings</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Manage your profile and password.</p>
+    <div className="mx-auto max-w-3xl flex flex-col gap-6">
+      <div>
+        <h1 className="font-headline text-headline-lg text-on-surface font-semibold">
+          Account Settings
+        </h1>
+        <p className="font-body text-body-sm text-on-surface-variant mt-1">
+          Manage your profile, quantum security parameters, and account settings.
+        </p>
+      </div>
 
-      {/* User info */}
-      <section className="mt-6 rounded-xl border border-border bg-card p-6">
-        <h2 className="mb-2 text-sm font-semibold">Profile</h2>
-        <InfoRow icon={User} label="Name" value={user.name} />
-        <InfoRow icon={Mail} label="Email" value={user.email} />
-        <InfoRow icon={BadgeCheck} label="Plan" value={`${user.plan} plan`} />
-        <InfoRow icon={Calendar} label="Member since" value={formatDate(user.memberSince)} />
+      {/* User profile card */}
+      <section className="rounded-xl border border-outline-variant bg-surface-container-low p-6 flex flex-col gap-4">
+        <h2 className="font-headline text-title-md text-on-surface font-semibold">
+          Profile Information
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="rounded-lg border border-outline-variant/60 bg-surface-container p-3 flex flex-col gap-1">
+            <span className="font-label text-label-sm text-on-surface-variant">Name</span>
+            <span className="font-body text-body-md text-on-surface font-medium">{user.name}</span>
+          </div>
+          <div className="rounded-lg border border-outline-variant/60 bg-surface-container p-3 flex flex-col gap-1">
+            <span className="font-label text-label-sm text-on-surface-variant">Email Address</span>
+            <span className="font-body text-body-md text-on-surface font-medium">{user.email}</span>
+          </div>
+          <div className="rounded-lg border border-outline-variant/60 bg-surface-container p-3 flex flex-col gap-1">
+            <span className="font-label text-label-sm text-on-surface-variant">Subscription Plan</span>
+            <span className="font-body text-body-md text-secondary font-medium">Enterprise Quantum Pro</span>
+          </div>
+          <div className="rounded-lg border border-outline-variant/60 bg-surface-container p-3 flex flex-col gap-1">
+            <span className="font-label text-label-sm text-on-surface-variant">Cryptography</span>
+            <span className="font-body text-body-md text-on-surface font-medium">
+              ML-KEM-768 + AES-256-GCM
+            </span>
+          </div>
+        </div>
       </section>
 
-      {/* Change password */}
-      <section className="mt-6 rounded-xl border border-border bg-card p-6">
-        <div className="mb-4 flex items-center gap-2">
-          <KeyRound className="size-4 text-muted-foreground" aria-hidden="true" />
-          <h2 className="text-sm font-semibold">Change password</h2>
-        </div>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="current" className="text-sm font-medium">
-              Current password
+      {/* Password Change */}
+      <section className="rounded-xl border border-outline-variant bg-surface-container-low p-6 flex flex-col gap-4">
+        <h2 className="font-headline text-title-md text-on-surface font-semibold">
+          Change Password
+        </h2>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <div>
+            <label className="font-label text-label-sm text-on-surface-variant mb-1 block">
+              Current Password
             </label>
             <input
-              id="current"
               type="password"
               value={current}
               onChange={(e) => setCurrent(e.target.value)}
-              className={inputClass}
-              autoComplete="current-password"
+              className="w-full px-3.5 py-2 rounded border border-outline-variant bg-surface-container text-on-surface text-body-md focus:outline-none focus:border-primary"
             />
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="new" className="text-sm font-medium">
-                New password
-              </label>
-              <input
-                id="new"
-                type="password"
-                value={next}
-                onChange={(e) => setNext(e.target.value)}
-                className={inputClass}
-                autoComplete="new-password"
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="confirm" className="text-sm font-medium">
-                Confirm new password
-              </label>
-              <input
-                id="confirm"
-                type="password"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                className={inputClass}
-                autoComplete="new-password"
-              />
-            </div>
+          <div>
+            <label className="font-label text-label-sm text-on-surface-variant mb-1 block">
+              New Password
+            </label>
+            <input
+              type="password"
+              value={next}
+              onChange={(e) => setNext(e.target.value)}
+              className="w-full px-3.5 py-2 rounded border border-outline-variant bg-surface-container text-on-surface text-body-md focus:outline-none focus:border-primary"
+            />
+          </div>
+          <div>
+            <label className="font-label text-label-sm text-on-surface-variant mb-1 block">
+              Confirm New Password
+            </label>
+            <input
+              type="password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              className="w-full px-3.5 py-2 rounded border border-outline-variant bg-surface-container text-on-surface text-body-md focus:outline-none focus:border-primary"
+            />
           </div>
 
           {message && (
-            <p
-              className={
-                message.includes("success") ? "text-sm text-primary" : "text-sm text-destructive"
-              }
-              role="status"
-            >
-              {message}
-            </p>
+            <p className="font-body text-body-sm text-secondary mt-1">{message}</p>
           )}
 
-          <div>
-            <Button type="submit">Update password</Button>
+          <div className="flex justify-end pt-2">
+            <button
+              type="submit"
+              className="px-4 py-2 rounded bg-primary hover:bg-secondary text-on-primary font-label text-label-md font-medium transition-colors"
+            >
+              Update Password
+            </button>
           </div>
         </form>
       </section>

@@ -1,15 +1,20 @@
 "use client"
 
 import { useState } from "react"
-import { Lock, Mail, Shield, User, Loader2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Lock, Mail, User, Loader2 } from "lucide-react"
 import { fetchUserSalt, loginUser, registerUser } from "@/lib/api"
-import { deriveKyberSeed, deriveKyberKeyPair, deriveAuthHash, uint8ToBase64 } from "@/lib/crypto"
+import { deriveKyberSeed, deriveKyberKeyPair, deriveAuthHash, deriveVaultKey, uint8ToBase64 } from "@/lib/crypto"
 
 export function LoginView({
   onSignIn,
 }: {
-  onSignIn: (token: string, email: string, kyberPublicKey: Uint8Array, kyberPrivateKey: Uint8Array) => void
+  onSignIn: (
+    token: string,
+    email: string,
+    kyberPublicKey: Uint8Array,
+    kyberPrivateKey: Uint8Array,
+    vaultKey: CryptoKey
+  ) => void
 }) {
   const [isRegistering, setIsRegistering] = useState(false)
   const [firstName, setFirstName] = useState("")
@@ -49,28 +54,23 @@ export function LoginView({
     try {
       if (isRegistering) {
         // ── REGISTRATION (Zero-Knowledge) ──
-        // 1. Generate random PBKDF2 salt
         const randomBytes = new Uint8Array(16)
         crypto.getRandomValues(randomBytes)
         const salt = Array.from(randomBytes).map((b) => b.toString(16).padStart(2, "0")).join("")
 
-        // 2. Derive Kyber seed (64 bytes) and auth hash (32 bytes) — two separate PBKDF2 paths
-        const [kyberSeed, authHash] = await Promise.all([
+        const [kyberSeed, authHash, vaultKey] = await Promise.all([
           deriveKyberSeed(password, salt),
           deriveAuthHash(password, salt),
+          deriveVaultKey(password, salt),
         ])
 
-        // 3. Derive deterministic ML-KEM-768 key pair
         const { publicKey, privateKey } = await deriveKyberKeyPair(kyberSeed)
-
-        // 4. Register — send authHash (NOT password) + kyberPublicKey to server
         const kyberPubKeyBase64 = uint8ToBase64(publicKey)
         const { token } = await registerUser(email, authHash, salt, kyberPubKeyBase64, firstName, lastName)
 
-        onSignIn(token, email, publicKey, privateKey)
+        onSignIn(token, email, publicKey, privateKey, vaultKey)
       } else {
         // ── LOGIN (Zero-Knowledge) ──
-        // 1. Fetch salt from server
         const salt = await fetchUserSalt(email)
         if (!salt) {
           setError("Invalid email or password")
@@ -78,19 +78,16 @@ export function LoginView({
           return
         }
 
-        // 2. Derive auth hash and Kyber seed from password + salt
-        const [kyberSeed, authHash] = await Promise.all([
+        const [kyberSeed, authHash, vaultKey] = await Promise.all([
           deriveKyberSeed(password, salt),
           deriveAuthHash(password, salt),
+          deriveVaultKey(password, salt),
         ])
 
-        // 3. Re-derive the same deterministic ML-KEM-768 key pair
         const { publicKey, privateKey } = await deriveKyberKeyPair(kyberSeed)
-
-        // 4. Authenticate — send authHash (NOT password) to server
         const { token } = await loginUser(email, authHash)
 
-        onSignIn(token, email, publicKey, privateKey)
+        onSignIn(token, email, publicKey, privateKey, vaultKey)
       }
     } catch (err: any) {
       console.error(err)
@@ -101,54 +98,66 @@ export function LoginView({
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm">
+    <main className="flex min-h-screen items-center justify-center bg-surface px-4 py-8">
+      <div className="w-full max-w-md">
         <div className="mb-8 flex flex-col items-center text-center">
-          <div className="flex size-12 items-center justify-center rounded-xl bg-primary">
-            <Shield className="size-6 text-primary-foreground" aria-hidden="true" />
+          <div className="flex size-12 items-center justify-center rounded-xl bg-primary/20 border border-primary/40 text-secondary mb-3">
+            <span
+              className="material-symbols-outlined text-secondary"
+              style={{ fontSize: "28px", fontVariationSettings: "'FILL' 1" }}
+              aria-hidden="true"
+            >
+              cloud
+            </span>
           </div>
-          <h1 className="mt-4 text-2xl font-semibold tracking-tight text-balance">QuantumVault</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Secure cloud storage for your files</p>
+          <h1 className="font-headline text-headline-lg font-semibold tracking-tight text-on-surface">
+            QuantumVault
+          </h1>
+          <p className="font-body text-body-sm text-on-surface-variant mt-1">
+            Zero-knowledge, post-quantum encrypted cloud vault
+          </p>
         </div>
 
-        <div className="rounded-xl border border-border bg-card p-6">
+        <div className="rounded-xl border border-outline-variant bg-surface-container-low p-6 sm:p-8 shadow-xl">
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {error && (
-              <div className="rounded-md bg-destructive/15 p-3 text-xs text-destructive">{error}</div>
+              <div className="rounded-md bg-error-container/40 border border-error/50 p-3 text-xs text-on-error-container">
+                {error}
+              </div>
             )}
 
             {isRegistering && (
               <div className="flex gap-3">
                 <div className="flex flex-1 flex-col gap-1.5">
-                  <label htmlFor="firstName" className="text-sm font-medium">
+                  <label htmlFor="firstName" className="font-label text-label-sm text-on-surface-variant">
                     First Name
                   </label>
                   <div className="relative">
-                    <User className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                    <User className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-on-surface-variant" aria-hidden="true" />
                     <input
                       id="firstName"
                       type="text"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       placeholder="Jane"
-                      className="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
+                      className="h-10 w-full rounded-md border border-outline-variant bg-surface-container pl-9 pr-3 text-sm text-on-surface outline-none placeholder:text-on-surface-variant/60 focus:border-primary focus:ring-1 focus:ring-primary"
                       disabled={loading}
                     />
                   </div>
                 </div>
                 <div className="flex flex-1 flex-col gap-1.5">
-                  <label htmlFor="lastName" className="text-sm font-medium">
+                  <label htmlFor="lastName" className="font-label text-label-sm text-on-surface-variant">
                     Last Name
                   </label>
                   <div className="relative">
-                    <User className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                    <User className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-on-surface-variant" aria-hidden="true" />
                     <input
                       id="lastName"
                       type="text"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       placeholder="Doe"
-                      className="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
+                      className="h-10 w-full rounded-md border border-outline-variant bg-surface-container pl-9 pr-3 text-sm text-on-surface outline-none placeholder:text-on-surface-variant/60 focus:border-primary focus:ring-1 focus:ring-primary"
                       disabled={loading}
                     />
                   </div>
@@ -157,36 +166,36 @@ export function LoginView({
             )}
 
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="email" className="text-sm font-medium">Email</label>
+              <label htmlFor="email" className="font-label text-label-sm text-on-surface-variant">
+                Email
+              </label>
               <div className="relative">
-                <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-on-surface-variant" aria-hidden="true" />
                 <input
                   id="email"
                   type="email"
-                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
+                  placeholder="name@example.com"
+                  className="h-10 w-full rounded-md border border-outline-variant bg-surface-container pl-9 pr-3 text-sm text-on-surface outline-none placeholder:text-on-surface-variant/60 focus:border-primary focus:ring-1 focus:ring-primary"
                   disabled={loading}
                 />
               </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="password" className="text-sm font-medium">
-                {isRegistering ? "Create password" : "Password"}
+              <label htmlFor="password" className="font-label text-label-sm text-on-surface-variant">
+                Password
               </label>
               <div className="relative">
-                <Lock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                <Lock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-on-surface-variant" aria-hidden="true" />
                 <input
                   id="password"
                   type="password"
-                  autoComplete={isRegistering ? "new-password" : "current-password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
+                  className="h-10 w-full rounded-md border border-outline-variant bg-surface-container pl-9 pr-3 text-sm text-on-surface outline-none placeholder:text-on-surface-variant/60 focus:border-primary focus:ring-1 focus:ring-primary"
                   disabled={loading}
                 />
               </div>
@@ -194,51 +203,58 @@ export function LoginView({
 
             {isRegistering && (
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="confirmPassword" className="text-sm font-medium">Confirm Password</label>
+                <label htmlFor="confirmPassword" className="font-label text-label-sm text-on-surface-variant">
+                  Confirm Password
+                </label>
                 <div className="relative">
-                  <Lock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                  <Lock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-on-surface-variant" aria-hidden="true" />
                   <input
                     id="confirmPassword"
                     type="password"
-                    autoComplete="new-password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
+                    className="h-10 w-full rounded-md border border-outline-variant bg-surface-container pl-9 pr-3 text-sm text-on-surface outline-none placeholder:text-on-surface-variant/60 focus:border-primary focus:ring-1 focus:ring-primary"
                     disabled={loading}
                   />
                 </div>
               </div>
             )}
 
-            <Button type="submit" className="mt-2 w-full" disabled={loading}>
+            <button
+              type="submit"
+              className="mt-2 flex h-10 w-full items-center justify-center rounded-md bg-primary hover:bg-secondary text-on-primary hover:text-on-secondary font-label text-label-md font-medium transition-colors disabled:opacity-50"
+              disabled={loading}
+            >
               {loading ? (
                 <>
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                  {isRegistering ? "Creating account..." : "Signing in..."}
+                  <Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" />
+                  Deriving ML-KEM-768 Keys...
                 </>
               ) : isRegistering ? (
-                "Create account"
+                "Create Encrypted Vault"
               ) : (
-                "Sign in"
+                "Sign In to Vault"
               )}
-            </Button>
+            </button>
           </form>
+
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setIsRegistering(!isRegistering)
+                setError(null)
+              }}
+              className="font-body text-body-sm text-secondary hover:underline"
+            >
+              {isRegistering ? "Already have a vault? Sign in" : "Need a vault? Create an account"}
+            </button>
+          </div>
         </div>
 
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          {isRegistering ? "Already have an account? " : "Don't have an account? "}
-          <button
-            type="button"
-            onClick={() => {
-              setIsRegistering(!isRegistering)
-              setError(null)
-            }}
-            className="font-medium text-foreground underline-offset-4 hover:underline"
-            disabled={loading}
-          >
-            {isRegistering ? "Sign in" : "Sign up"}
-          </button>
+        <p className="mt-6 text-center font-mono text-[11px] text-on-surface-variant/70">
+          ML-KEM-768 • AES-256-GCM • Zero-Knowledge
         </p>
       </div>
     </main>

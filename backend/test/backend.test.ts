@@ -1,17 +1,23 @@
-// import * as cdk from 'aws-cdk-lib/core';
-// import { Template } from 'aws-cdk-lib/assertions';
-// import * as Backend from '../lib/backend-stack';
+import * as cdk from 'aws-cdk-lib';
+import { Template } from 'aws-cdk-lib/assertions';
+import { BackendStack } from '../lib/backend-stack';
 
-// example test. To run these tests, uncomment this file along with the
-// example resource in lib/backend-stack.ts
-test('SQS Queue Created', () => {
-//   const app = new cdk.App();
-//     // WHEN
-//   const stack = new Backend.BackendStack(app, 'MyTestStack');
-//     // THEN
-//   const template = Template.fromStack(stack);
+describe('QuantumVault CDK Backend Stack', () => {
+  test('Synthesizes expected cloud infrastructure', () => {
+    const app = new cdk.App();
+    const stack = new BackendStack(app, 'TestBackendStack');
+    const template = Template.fromStack(stack);
 
-//   template.hasResourceProperties('AWS::SQS::Queue', {
-//     VisibilityTimeout: 300
-//   });
+    // 1 S3 Bucket for client-side encrypted vault items
+    template.resourceCountIs('AWS::S3::Bucket', 1);
+
+    // 2 DynamoDB Tables (Users table and Files table with ownerID-index GSI)
+    template.resourceCountIs('AWS::DynamoDB::Table', 2);
+
+    // 1 API Gateway REST API
+    template.resourceCountIs('AWS::ApiGateway::RestApi', 1);
+
+    // 8 Lambda Functions for Zero-Knowledge Auth & File Operations
+    template.resourceCountIs('AWS::Lambda::Function', 8);
+  });
 });

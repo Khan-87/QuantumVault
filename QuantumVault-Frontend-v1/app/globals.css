@@ -4,68 +4,128 @@
 
 @custom-variant dark (&:is(.dark *));
 
-@theme inline {
-  --font-heading: var(--font-sans);
-  --font-sans: var(--font-geist-sans), 'Geist Fallback';
-  --font-mono: var(--font-geist-mono), 'Geist Mono Fallback';
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --color-foreground: var(--foreground);
-  --color-background: var(--background);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
+@theme {
+  --color-background: #0B0D12;
+  --color-on-background: #E8ECF4;
+  --color-surface: #0B0D12;
+  --color-on-surface: #E8ECF4;
+  --color-surface-container-lowest: #07090D;
+  --color-surface-container-low: #12151D;
+  --color-surface-container: #181C26;
+  --color-surface-container-high: #202532;
+  --color-surface-container-highest: #2A3040;
+  --color-on-surface-variant: #9BA3B8;
+
+  --color-primary: #2563EB;
+  --color-on-primary: #FFFFFF;
+  --color-primary-container: #172554;
+  --color-on-primary-container: #93C5FD;
+
+  --color-secondary: #60A5FA;
+  --color-on-secondary: #0A192F;
+  --color-secondary-container: #1E3A8A;
+  --color-on-secondary-container: #DBEAFE;
+
+  --color-outline: #5E667A;
+  --color-outline-variant: #262C3A;
+
+  --color-error: #EF4444;
+  --color-on-error: #1C1C1C;
+  --color-error-container: #450A0A;
+  --color-on-error-container: #FCA5A5;
+
+  --color-info-badge: #3B82F6;
+  --color-doc-badge: #2563EB;
+  --color-pdf-badge: #DC2626;
+  --color-jpg-badge: #0369A1;
+
+  --font-headline: 'Space Grotesk', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-title: 'Geist', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: 'Geist', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-label: 'Geist', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --spacing-gutter-xs: 4px;
+  --spacing-gutter-sm: 8px;
+  --spacing-gutter-md: 16px;
+  --spacing-gutter-lg: 24px;
+  --spacing-gutter-xl: 32px;
+  --spacing-section: 28px;
+  --spacing-page-margin: 24px;
+
+  --text-headline-lg: 24px;
+  --text-headline-lg--line-height: 32px;
+  --text-headline-md: 18px;
+  --text-headline-md--line-height: 26px;
+  --text-title-md: 15px;
+  --text-title-md--line-height: 22px;
+  --text-title-sm: 14px;
+  --text-title-sm--line-height: 20px;
+  --text-body-md: 14px;
+  --text-body-md--line-height: 20px;
+  --text-body-sm: 12px;
+  --text-body-sm--line-height: 18px;
+  --text-label-lg: 14px;
+  --text-label-lg--line-height: 20px;
+  --text-label-md: 13px;
+  --text-label-md--line-height: 18px;
+  --text-label-sm: 12px;
+  --text-label-sm--line-height: 16px;
+  --text-mono-sm: 12px;
+  --text-mono-sm--line-height: 16px;
 }
 
-/* QuantumVault dark-only palette: near-black background, white text, deep blue accent. */
 :root {
   color-scheme: dark;
-  --background: oklch(0.135 0 0);
-  --foreground: oklch(0.97 0 0);
-  --card: oklch(0.175 0 0);
-  --card-foreground: oklch(0.97 0 0);
-  --popover: oklch(0.175 0 0);
-  --popover-foreground: oklch(0.97 0 0);
-  --primary: oklch(0.55 0.21 263);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.23 0 0);
-  --secondary-foreground: oklch(0.97 0 0);
-  --muted: oklch(0.21 0 0);
-  --muted-foreground: oklch(0.66 0 0);
-  --accent: oklch(0.55 0.21 263);
-  --accent-foreground: oklch(0.99 0 0);
-  --destructive: oklch(0.62 0.21 25);
-  --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.55 0.21 263);
-  --radius: 0.625rem;
+  --background: #0B0D12;
+  --foreground: #E8ECF4;
+  --card: #12151D;
+  --card-foreground: #E8ECF4;
+  --popover: #181C26;
+  --popover-foreground: #E8ECF4;
+  --primary: #2563EB;
+  --primary-foreground: #FFFFFF;
+  --secondary: #181C26;
+  --secondary-foreground: #E8ECF4;
+  --muted: #181C26;
+  --muted-foreground: #9BA3B8;
+  --accent: #2563EB;
+  --accent-foreground: #FFFFFF;
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+  --border: #262C3A;
+  --input: #262C3A;
+  --ring: #2563EB;
+  --radius: 0.5rem;
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border-color: var(--border);
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-body);
   }
-  html {
-    @apply font-sans;
-  }
+}
+
+.material-symbols-outlined {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  line-height: 1 !important;
+  box-sizing: content-box;
+  overflow: hidden;
+  white-space: nowrap;
+  direction: ltr;
+  vertical-align: middle;
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
 }

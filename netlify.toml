@@ -1,6 +1,6 @@
 [build]
   base = "QuantumVault-Frontend-v1"
-  command = "pnpm build"
+  command = "npm run build"
   publish = "out"
 
 # Skip the Netlify Next.js plugin since we use static HTML export

@@ -7,11 +7,19 @@ import { QuickActions } from "@/components/quick-actions"
 import { UploadArea } from "@/components/upload-area"
 import { FileTable } from "@/components/file-table"
 import { AccountSettings } from "@/components/account-settings"
-import { type VaultFile, type FileType, formatBytes } from "@/lib/mock-data"
+import { DeletedFilesView } from "@/components/deleted-files-view"
+import { type VaultFile, type FileType } from "@/lib/mock-data"
 import { fetchUserFiles, uploadEncryptedFile, downloadEncryptedFile, deleteFile, type FileRecord } from "@/lib/api"
 import { deriveDeterministicUUID } from "@/lib/crypto"
 import { type UserSession } from "@/app/page"
-import { createFolder } from "@/lib/folder-store"
+import { createFolder, loadFileFolderMap, assignFileToFolder } from "@/lib/folder-store"
+import {
+  loadTrash,
+  addToTrash,
+  removeFromTrash,
+  emptyTrash,
+  type TrashItem,
+} from "@/lib/trash-store"
 
 function inferType(name: string): FileType {
   const ext = name.split(".").pop()?.toLowerCase() ?? ""
@@ -45,7 +53,7 @@ export function Dashboard({
   const [view, setView] = useState<NavView>("all-files")
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [files, setFiles] = useState<(VaultFile & { iv: string })[]>([])
-  const [deletedFiles, setDeletedFiles] = useState<(VaultFile & { iv: string })[]>([])
+  const [trashItems, setTrashItems] = useState<TrashItem[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [toastMessage, setToastMessage] = useState<string | null>(null)
@@ -64,13 +72,18 @@ export function Dashboard({
     [session.email]
   )
 
-  // Fetch files from DynamoDB on mount
+  // Fetch files from DynamoDB and load local trash on mount
   useEffect(() => {
     async function loadFiles() {
       try {
         setLoading(true)
         const records = await fetchUserFiles(session.token)
-        setFiles(records.map(mapRecordToFile))
+        const loadedTrash = loadTrash(session.email)
+        setTrashItems(loadedTrash)
+
+        // Filter out items that are currently in trash
+        const trashIdSet = new Set(loadedTrash.map((t) => t.id))
+        setFiles(records.filter((r) => !trashIdSet.has(r.fileId)).map(mapRecordToFile))
       } catch (error) {
         console.error("Failed to load files:", error)
       } finally {
@@ -78,14 +91,16 @@ export function Dashboard({
       }
     }
     loadFiles()
-  }, [session.token])
+  }, [session.token, session.email])
 
   const used = useMemo(() => files.reduce((sum, f) => sum + f.size, 0), [files])
 
   async function handleRefresh() {
     try {
       const records = await fetchUserFiles(session.token)
-      setFiles(records.map(mapRecordToFile))
+      const loadedTrash = loadTrash(session.email)
+      const trashIdSet = new Set(loadedTrash.map((t) => t.id))
+      setFiles(records.filter((r) => !trashIdSet.has(r.fileId)).map(mapRecordToFile))
     } catch (error) {
       console.error("Failed to refresh files:", error)
     }
@@ -117,19 +132,99 @@ export function Dashboard({
     showToast(`Renamed to "${name}"`)
   }
 
+  // Soft delete: moves to Trash store
   async function handleDelete(id: string) {
     const fileToDelete = files.find((f) => f.id === id)
+    if (!fileToDelete) return
+
+    const folderMap = loadFileFolderMap(session.email)
+    const originalFolderId = folderMap[id] || null
+
+    const updatedTrash = addToTrash(session.email, {
+      id: fileToDelete.id,
+      name: fileToDelete.name,
+      type: fileToDelete.type,
+      size: fileToDelete.size,
+      uploadedAt: fileToDelete.uploadedAt,
+      originalFolderId,
+      iv: fileToDelete.iv,
+    })
+
+    setTrashItems(updatedTrash)
+    setFiles((prev) => prev.filter((f) => f.id !== id))
+    showToast(`Moved "${fileToDelete.name}" to Trash.`)
+  }
+
+  // Restore single item from trash
+  function handleRestore(item: TrashItem) {
+    const restoredFile: VaultFile & { iv: string } = {
+      id: item.id,
+      name: item.name,
+      type: item.type,
+      size: item.size,
+      uploadedAt: item.uploadedAt,
+      status: "synced",
+      iv: item.iv || "",
+    }
+
+    setFiles((prev) => [restoredFile, ...prev])
+    if (item.originalFolderId) {
+      assignFileToFolder(session.email, item.id, item.originalFolderId)
+    }
+    const updated = removeFromTrash(session.email, item.id)
+    setTrashItems(updated)
+    showToast(`Restored "${item.name}" to your files.`)
+  }
+
+  // Restore multiple items
+  function handleRestoreBatch(items: TrashItem[]) {
+    const restoredFiles = items.map((item) => ({
+      id: item.id,
+      name: item.name,
+      type: item.type,
+      size: item.size,
+      uploadedAt: item.uploadedAt,
+      status: "synced" as const,
+      iv: item.iv || "",
+    }))
+
+    items.forEach((item) => {
+      if (item.originalFolderId) {
+        assignFileToFolder(session.email, item.id, item.originalFolderId)
+      }
+      removeFromTrash(session.email, item.id)
+    })
+
+    setFiles((prev) => [...restoredFiles, ...prev])
+    setTrashItems(loadTrash(session.email))
+    showToast(`Restored ${items.length} items.`)
+  }
+
+  // Permanent delete from AWS S3 & DynamoDB
+  async function handlePermanentDelete(id: string) {
     try {
       await deleteFile(session.token, id)
-      if (fileToDelete) {
-        setDeletedFiles((prev) => [fileToDelete, ...prev])
-      }
-      setFiles((prev) => prev.filter((f) => f.id !== id))
-      showToast("File deleted successfully.")
+      const updated = removeFromTrash(session.email, id)
+      setTrashItems(updated)
+      showToast("File permanently deleted from storage.")
     } catch (error) {
-      console.error("Delete failed:", error)
-      showToast("Failed to delete file.")
+      console.error("Permanent delete failed:", error)
+      showToast("Failed to delete file from AWS storage.")
     }
+  }
+
+  // Empty entire trash
+  async function handleEmptyTrash() {
+    for (const item of trashItems) {
+      try {
+        await deleteFile(session.token, item.id)
+      } catch (err) {
+        console.error("Failed to purge item from AWS:", item.id, err)
+      }
+    }
+    emptyTrash(session.email)
+    setTrashItems([])
+    showToast("Trash emptied permanently.")
   }
 
   function showToast(msg: string) {
@@ -183,7 +278,7 @@ export function Dashboard({
         />
 
         <main className="flex-1 px-4 lg:px-6 py-6 flex flex-col gap-6 max-w-7xl w-full">
-          {view === "all-files" || view === "dashboard" ? (
+          {view === "all-files" ? (
             <>
               {/* Quick Action Tiles */}
               <QuickActions
@@ -220,6 +315,41 @@ export function Dashboard({
                 onRefresh={handleRefresh}
               />
             </>
+          ) : view === "deleted-files" ? (
+            <DeletedFilesView
+              trashItems={trashItems}
+              userEmail={session.email}
+              onRestore={handleRestore}
+              onPermanentDelete={handlePermanentDelete}
+              onRestoreBatch={handleRestoreBatch}
+              onEmptyTrash={handleEmptyTrash}
+            />
+          ) : view === "dashboard" ? (
+            <div className="rounded-xl border border-outline-variant bg-surface-container-low p-8 flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-secondary" style={{ fontSize: "28px" }}>
+                  grid_view
+                </span>
+                <h1 className="font-headline text-headline-lg font-semibold">Dashboard Overview</h1>
+              </div>
+              <p className="font-body text-body-md text-on-surface-variant">
+                Quantum security telemetry and storage distribution.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
+                <div className="rounded-lg border border-outline-variant/60 bg-surface-container p-4 flex flex-col gap-1">
+                  <span className="font-label text-label-sm text-on-surface-variant">Active Files</span>
+                  <span className="font-headline text-headline-md font-semibold text-on-surface">{files.length}</span>
+                </div>
+                <div className="rounded-lg border border-outline-variant/60 bg-surface-container p-4 flex flex-col gap-1">
+                  <span className="font-label text-label-sm text-on-surface-variant">Files in Trash</span>
+                  <span className="font-headline text-headline-md font-semibold text-secondary">{trashItems.length}</span>
+                </div>
+                <div className="rounded-lg border border-outline-variant/60 bg-surface-container p-4 flex flex-col gap-1">
+                  <span className="font-label text-label-sm text-on-surface-variant">Security Protocol</span>
+                  <span className="font-headline text-headline-md font-semibold text-on-surface">ML-KEM-768</span>
+                </div>
+              </div>
+            </div>
           ) : view === "signatures" ? (
             <div className="rounded-xl border border-outline-variant bg-surface-container-low p-8 flex flex-col gap-4">
               <div className="flex items-center gap-3">
@@ -279,67 +409,6 @@ export function Dashboard({
               <div className="rounded-lg border border-outline-variant/60 bg-surface-container p-6 text-center text-on-surface-variant">
                 No active file requests.
               </div>
-            </div>
-          ) : view === "deleted-files" ? (
-            <div className="rounded-xl border border-outline-variant bg-surface-container-low p-8 flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-error" style={{ fontSize: "28px" }}>
-                    delete
-                  </span>
-                  <h1 className="font-headline text-headline-lg font-semibold">Deleted Files</h1>
-                </div>
-                {deletedFiles.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setDeletedFiles([])}
-                    className="px-3 py-1.5 rounded text-body-sm text-error border border-error/30 hover:bg-error-container/30"
-                  >
-                    Empty Trash
-                  </button>
-                )}
-              </div>
-              <p className="font-body text-body-md text-on-surface-variant">
-                Items deleted from your vault.
-              </p>
-              {deletedFiles.length === 0 ? (
-                <div className="rounded-lg border border-outline-variant/60 bg-surface-container p-6 text-center text-on-surface-variant">
-                  Trash is empty.
-                </div>
-              ) : (
-                <div className="w-full overflow-x-auto rounded-lg border border-outline-variant bg-surface-container">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-outline-variant text-on-surface-variant text-body-sm">
-                        <th className="py-2.5 px-4">Name</th>
-                        <th className="py-2.5 px-4">Size</th>
-                        <th className="py-2.5 px-4 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-outline-variant/60">
-                      {deletedFiles.map((file) => (
-                        <tr key={file.id} className="text-body-md text-on-surface">
-                          <td className="py-2.5 px-4">{file.name}</td>
-                          <td className="py-2.5 px-4 font-mono text-mono-sm">{formatBytes(file.size)}</td>
-                          <td className="py-2.5 px-4 text-right">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setFiles((prev) => [file, ...prev])
-                                setDeletedFiles((prev) => prev.filter((f) => f.id !== file.id))
-                                showToast(`Restored "${file.name}"`)
-                              }}
-                              className="text-secondary hover:underline text-body-sm"
-                            >
-                              Restore
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
             </div>
           ) : (
             <AccountSettings user={user} />
